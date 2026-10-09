@@ -1,0 +1,453 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Section panels */
+        .section-panel { display: none; }
+        .section-panel.active { display: block; }
+
+        /* Achievement badges */
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.5rem;
+        }
+        .achievement-badge {
+            background: var(--glass-bg);
+            border: var(--glass-border);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem 1rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .achievement-badge.unlocked {
+            border-color: rgba(16,185,129,0.4);
+            box-shadow: 0 0 18px rgba(16,185,129,0.12);
+        }
+        .achievement-badge.locked { opacity: 0.4; filter: grayscale(1); }
+        .achievement-badge .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .achievement-badge .ach-title { font-size: 0.9rem; font-weight: 600; }
+        .achievement-badge .ach-desc { font-size: 0.75rem; color: var(--text-secondary); margin: 0.3rem 0 0; }
+
+        /* Progress ring */
+        .progress-ring-wrap {
+            display: flex; align-items: center; justify-content: center;
+            position: relative; width: 90px; height: 90px; flex-shrink: 0;
+        }
+        .progress-ring-wrap svg { transform: rotate(-90deg); }
+        .progress-ring-wrap .ring-label {
+            position: absolute; font-weight: 700; font-size: 1rem;
+            color: var(--accent-primary);
+        }
+
+        /* Stat card */
+        .stat-card {
+            background: var(--glass-bg);
+            border: var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 1.25rem 1.5rem;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .stat-card .stat-icon { font-size: 2rem; }
+        .stat-card .stat-val { font-size: 1.6rem; font-weight: 700; color: var(--accent-primary); }
+        .stat-card .stat-lbl { font-size: 0.8rem; color: var(--text-secondary); }
+
+        /* Settings form */
+        .settings-section { margin-bottom: 2rem; }
+        .settings-section h3 { margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .settings-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .settings-row label { font-size: 0.95rem; }
+        .settings-row .hint { font-size: 0.8rem; color: var(--text-secondary); }
+
+        /* Toggle switch */
+        .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+        .toggle .slider:before {
+            position: absolute; content: "";
+            height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background: var(--text-secondary);
+            border-radius: 50%; transition: 0.3s;
+        }
+        .toggle input:checked + .slider { background: var(--accent-primary); border-color: var(--accent-primary); }
+        .toggle input:checked + .slider:before { transform: translateX(20px); background: white; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center"></div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link active" id="nav-learning" onclick="showSection('learning', this)">
+                    <i>🎓</i> My Learning
+                </a>
+                <a href="#" class="sidebar-link" id="nav-achievements" onclick="showSection('achievements', this)">
+                    <i>🏆</i> Achievements
+                </a>
+                <a href="#" class="sidebar-link" id="nav-settings" onclick="showSection('settings', this)">
+                    <i>⚙️</i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+
+            <!-- MY LEARNING -->
+            <div id="panel-learning" class="section-panel active">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2>My Learning</h2>
+                        <p>Continue your journey and master new skills.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openEnrollModal()">+ Enroll in a Course</button>
+                </div>
+                <div class="grid grid-cols-3 gap-3 mb-4" id="stats-row"></div>
+                <div class="grid grid-cols-2 gap-3" id="enrolled-courses">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- ACHIEVEMENTS -->
+            <div id="panel-achievements" class="section-panel">
+                <h2 class="mb-1">Achievements</h2>
+                <p class="mb-4">Your earned badges and milestones.</p>
+                <div class="achievement-grid" id="achievement-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="panel-settings" class="section-panel">
+                <h2 class="mb-1">Settings</h2>
+                <p class="mb-4">Manage your account and preferences.</p>
+
+                <div class="card" style="max-width:640px;">
+                    <!-- Profile -->
+                    <div class="settings-section">
+                        <h3>👤 Profile Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="settings-name" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" id="settings-email" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profile Picture</label>
+                            <input type="file" id="settings-image" class="form-control" accept="image/*">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveProfile()">💾 Save Profile</button>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="settings-section">
+                        <h3>🔒 Change Password</h3>
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" id="settings-current-pw" class="form-control" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" id="settings-new-pw" class="form-control" placeholder="••••••••">
+                        </div>
+                        <button class="btn btn-secondary" onclick="changePassword()">🔑 Update Password</button>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div class="settings-section">
+                        <h3>🎛️ Preferences</h3>
+                        <div class="settings-row">
+                            <div>
+                                <label>Email Notifications</label>
+                                <div class="hint">Receive alerts for new modules and grades</div>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="pref-email" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <label>Quiz Reminders</label>
+                                <div class="hint">Get notified before quiz deadlines</div>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="pref-quiz">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-row" style="border-bottom:none;">
+                            <div>
+                                <label>Certificate Auto-Download</label>
+                                <div class="hint">Automatically download when you pass</div>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="pref-cert" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Danger -->
+                    <div class="settings-section">
+                        <h3 style="color: var(--accent-danger);">⚠️ Account</h3>
+                        <button class="btn btn-danger" onclick="confirmLogout()">🚪 Logout</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('student');
+
+        const CURRENT_USER = getCurrentUser();
+
+        // ── Section switching ──────────────────────────────────────────────
+        function showSection(name, link) {
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(a => a.classList.remove('active'));
+            document.getElementById('panel-' + name).classList.add('active');
+            if (link) link.classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLearning();
+            renderAchievements();
+            renderSettings();
+        });
+
+        // ── MY LEARNING ────────────────────────────────────────────────────
+        function renderLearning() {
+            const user = CURRENT_USER;
+            const myEnrollments = MOCK_DB.enrollments.filter(e => e.studentId === user.id);
+            const completed = myEnrollments.filter(e => e.completed).length;
+            const avgProgress = myEnrollments.length
+                ? Math.round(myEnrollments.reduce((s,e) => s + e.progress, 0) / myEnrollments.length)
+                : 0;
+
+            // Stats row
+            document.getElementById('stats-row').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div><div class="stat-val">${myEnrollments.length}</div><div class="stat-lbl">Enrolled Courses</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div><div class="stat-val">${completed}</div><div class="stat-lbl">Completed</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div><div class="stat-val">${avgProgress}%</div><div class="stat-lbl">Avg. Progress</div></div>
+                </div>
+            `;
+
+            const courseContainer = document.getElementById('enrolled-courses');
+            if (myEnrollments.length === 0) {
+                courseContainer.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;padding:3rem;">
+                    <p style="font-size:1.1rem;">You are not enrolled in any courses yet.</p>
+                    <a href="../register.html" class="btn btn-primary" style="margin-top:1rem;">Browse Courses</a>
+                </div>`;
+                return;
+            }
+
+            myEnrollments.forEach(enrollment => {
+                const course = MOCK_DB.courses.find(c => c.id === enrollment.courseId);
+                if (!course) return;
+                const certHtml = enrollment.completed
+                    ? `<a href="certificate.html?courseId=${course.id}" class="btn btn-secondary" style="width:100%;margin-top:0.5rem;">🏅 View Certificate</a>`
+                    : '';
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="badge badge-primary">Course</span>
+                        <span style="color:var(--text-secondary);font-size:0.8rem;">${enrollment.progress}% Complete</span>
+                    </div>
+                    <h3>${course.title}</h3>
+                    <p>${course.description}</p>
+                    <div style="background:rgba(255,255,255,0.1);height:8px;border-radius:4px;margin:1rem 0;overflow:hidden;">
+                        <div style="background:var(--accent-primary);width:${enrollment.progress}%;height:100%;transition:width 0.5s;"></div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="course.html?id=${course.id}" class="btn btn-primary" style="width:100%;">
+                            ${enrollment.progress > 0 ? '▶ Continue Learning' : '🚀 Start Course'}
+                        </a>
+                        ${certHtml}
+                    </div>
+                `;
+                courseContainer.appendChild(card);
+            });
+        }
+
+        function openEnrollModal() {
+            const user = CURRENT_USER;
+            const myEnrollments = MOCK_DB.enrollments.filter(e => e.studentId === user.id);
+            const myCourseIds = myEnrollments.map(e => e.courseId);
+            
+            // Available courses are those not enrolled in
+            const availableCourses = MOCK_DB.courses.filter(c => !myCourseIds.includes(c.id));
+            
+            if (availableCourses.length === 0) {
+                alert("You are already enrolled in all available courses!");
+                return;
+            }
+            
+            const optionsHtml = availableCourses.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+            
+            const formHtml = `
+                <div class="form-group">
+                    <label class="form-label">Choose a Course</label>
+                    <select name="courseId" class="form-control" style="appearance: none; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 4px;" required>
+                        ${optionsHtml}
+                    </select>
+                </div>
+            `;
+            
+            showModal("Enroll in a New Course", formHtml, (formData) => {
+                const courseId = parseInt(formData.get('courseId'));
+                const course = MOCK_DB.courses.find(c => c.id === courseId);
+                
+                MOCK_DB.enrollments.push({
+                    studentId: user.id,
+                    courseId: courseId,
+                    progress: 0,
+                    completed: false,
+                    score: null,
+                    completedModules: []
+                });
+                
+                saveDB();
+                
+                // Remove modal
+                const modal = document.getElementById('dynamic-modal');
+                if (modal) modal.remove();
+                
+                // Re-render dashboard components
+                renderLearning();
+                renderAchievements();
+                
+                // Show success notice
+                alert(`🎉 Successfully enrolled in ${course.title}!`);
+            });
+        }
+
+        // ── ACHIEVEMENTS ────────────────────────────────────────────────────
+        function renderAchievements() {
+            const user = CURRENT_USER;
+            const myEnrollments = MOCK_DB.enrollments.filter(e => e.studentId === user.id);
+            const completed = myEnrollments.filter(e => e.completed).length;
+            const hasQuizScore = myEnrollments.some(e => e.score !== null);
+            const highScore = myEnrollments.some(e => e.score >= 90);
+
+            const allAchievements = [
+                { icon: '🚀', title: 'First Steps', desc: 'Enroll in your first course', unlocked: myEnrollments.length >= 1 },
+                { icon: '📖', title: 'Eager Learner', desc: 'Enroll in 3 or more courses', unlocked: myEnrollments.length >= 3 },
+                { icon: '✅', title: 'Graduate', desc: 'Complete your first course', unlocked: completed >= 1 },
+                { icon: '🎓', title: 'Scholar', desc: 'Complete 3 courses', unlocked: completed >= 3 },
+                { icon: '📝', title: 'Quiz Taker', desc: 'Attempt your first quiz/exam', unlocked: hasQuizScore },
+                { icon: '⭐', title: 'High Achiever', desc: 'Score 90% or above on an exam', unlocked: highScore },
+                { icon: '🏆', title: 'Champion', desc: 'Complete all enrolled courses', unlocked: myEnrollments.length > 0 && completed === myEnrollments.length },
+                { icon: '🔥', title: 'On Fire', desc: 'Complete a course in under 7 days', unlocked: false },
+            ];
+
+            const grid = document.getElementById('achievement-grid');
+            grid.innerHTML = allAchievements.map(a => `
+                <div class="achievement-badge ${a.unlocked ? 'unlocked' : 'locked'}">
+                    <div class="icon">${a.icon}</div>
+                    <div class="ach-title">${a.title}</div>
+                    <div class="ach-desc">${a.desc}</div>
+                    ${a.unlocked ? '<div style="font-size:0.75rem;color:var(--accent-primary);margin-top:0.5rem;">✅ Earned</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        // ── SETTINGS ────────────────────────────────────────────────────────
+        function renderSettings() {
+            const user = CURRENT_USER;
+            document.getElementById('settings-name').value = user.name;
+            document.getElementById('settings-email').value = user.email;
+        }
+
+        function saveProfile() {
+            const newName = document.getElementById('settings-name').value.trim();
+            const newEmail = document.getElementById('settings-email').value.trim();
+            if (!newName || !newEmail) { alert('Name and email cannot be empty.'); return; }
+
+            const dbUser = MOCK_DB.users.find(u => u.id === CURRENT_USER.id);
+            if (!dbUser) return;
+
+            const imageFile = document.getElementById('settings-image').files[0];
+            const saveChanges = () => {
+                dbUser.name = newName;
+                dbUser.email = newEmail;
+                saveDB();
+                localStorage.setItem('kibiya_user', JSON.stringify(dbUser));
+                alert('✅ Profile updated successfully!');
+                const profileContainer = document.querySelector('.nav-profile');
+                if (profileContainer) window.location.reload();
+            };
+
+            if (imageFile) {
+                readImageAsDataUrl(imageFile).then(imageData => {
+                    dbUser.image = imageData;
+                    saveChanges();
+                });
+            } else {
+                saveChanges();
+            }
+        }
+
+        function changePassword() {
+            const current = document.getElementById('settings-current-pw').value;
+            const newPw = document.getElementById('settings-new-pw').value;
+            const dbUser = MOCK_DB.users.find(u => u.id === CURRENT_USER.id);
+
+            if (!dbUser || dbUser.password !== current) {
+                alert('❌ Current password is incorrect.'); return;
+            }
+            if (newPw.length < 6) {
+                alert('❌ New password must be at least 6 characters.'); return;
+            }
+            dbUser.password = newPw;
+            saveDB();
+            document.getElementById('settings-current-pw').value = '';
+            document.getElementById('settings-new-pw').value = '';
+            alert('✅ Password changed successfully!');
+        }
+
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) logout();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- Inline styles for dashboard specifics if needed -->
+    <style>
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .stat-icon.primary { background: rgba(16, 185, 129, 0.1); color: var(--accent-primary); }
+        .stat-icon.secondary { background: rgba(59, 130, 246, 0.1); color: var(--accent-secondary); }
+        .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center">
+                <!-- Injected via main.js -->
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link active">
+                    <i>📊</i> Dashboard
+                </a>
+                <a href="facilitators.html" class="sidebar-link">
+                    <i>👩‍🏫</i> Facilitators
+                </a>
+                <a href="students.html" class="sidebar-link">
+                    <i>🎓</i> Students
+                </a>
+                <a href="courses.html" class="sidebar-link">
+                    <i>📚</i> Courses
+                </a>
+                <a href="galleries.html" class="sidebar-link">
+                    <i>🖼️</i> Galleries
+                </a>
+                <a href="manage-team.html" class="sidebar-link">
+                    <i>👥</i> Manage Team & Advisory Council
+                </a>
+                <a href="settings.html" class="sidebar-link">
+                    <i>⚙️</i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2>Admin Overview</h2>
+                    <p>Manage users, courses, and system settings.</p>
+                </div>
+                <button class="btn btn-primary" onclick="addUser()">➕ Add User</button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="card stat-card">
+                    <div class="stat-icon primary">👥</div>
+                    <div>
+                        <h3>1,204</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Total Students</p>
+                    </div>
+                </div>
+
+            <div class="grid grid-cols-1 gap-3 mb-4">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3>Galleries Manager</h3>
+                        <a href="galleries.html" class="btn btn-primary">Manage Galleries</a>
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0;">Upload, edit, and remove gallery images used across the site (events, workshops, campus photos).</p>
+                </div>
+            </div>
+                <div class="card stat-card">
+                    <div class="stat-icon secondary">👩‍🏫</div>
+                    <div>
+                        <h3>45</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Active Facilitators</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon warning">📚</div>
+                    <div>
+                        <h3>12</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Total Courses</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity / Users Table -->
+            <div class="card">
+                <div class="flex justify-between items-center mb-3">
+                    <h3>Recent Users</h3>
+                    <a href="students.html" class="btn btn-outline" style="padding: 0.4rem 1rem; font-size: 0.8rem;">View All</a>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        // Check authorization
+        checkAuth('admin');
+
+        // Populate mock users
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('user-table-body');
+                MOCK_DB.users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${u.name}</td>
+                    <td style="color: var(--text-secondary);">${u.email}</td>
+                    <td><span class="badge ${u.role === 'admin' ? 'badge-primary' : (u.role === 'facilitator' ? 'badge-warning' : 'badge-success')}">${u.role.toUpperCase()}</span></td>
+                    <td><span style="color: var(--accent-primary);">Active</span></td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="editUser(${u.id})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left:0.25rem;" onclick="deleteUser(${u.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Team & Advisory Council - Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .manager { max-width: 1100px; margin: 2rem auto; padding: 1rem; }
+        .manager-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .team-card { background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--border-radius); }
+        .member-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .member { text-align: center; padding: 0.75rem; }
+        .member img { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent-primary); margin-bottom: 0.5rem; }
+        .member h4 { margin: 0.5rem 0 0.25rem; }
+        .member p { margin: 0; color: var(--text-secondary); font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container" style="max-width: 1200px;">
+            <a href="dashboard.html" class="logo"><img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span></a>
+            <div style="margin-left: auto;">
+                <a href="dashboard.html" class="btn btn-outline">← Back to Dashboard</a>
+            </div>
+            <div class="nav-profile"></div>
+        </div>
+    </nav>
+
+    <main class="container manager">
+        <div class="flex justify-between items-center mb-3">
+            <h2>Manage Team & Advisory Council</h2>
+            <div>
+                <button class="btn btn-primary" id="add-officer">➕ Add Management Officer</button>
+                <button class="btn btn-outline" id="add-council">➕ Add Advisory Council</button>
+            </div>
+        </div>
+
+        <div class="manager-grid">
+            <section class="team-card">
+                <div class="flex justify-between items-center mb-2">
+                    <h3>Management Team</h3>
+                </div>
+                <div id="management-list" class="member-grid"></div>
+            </section>
+
+            <section class="team-card">
+                <div class="flex justify-between items-center mb-2">
+                    <h3>Advisory Council</h3>
+                </div>
+                <div id="council-list" class="member-grid"></div>
+            </section>
+        </div>
+    </main>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('admin');
+
+        function renderLists() {
+            const mg = document.getElementById('management-list');
+            const ac = document.getElementById('council-list');
+            const managers = [...(MOCK_DB.managementTeam || [])].sort((a, b) => (parseInt(a.rank) || 999) - (parseInt(b.rank) || 999));
+            const council = [...(MOCK_DB.advisoryCouncil || [])].sort((a, b) => (parseInt(a.rank) || 999) - (parseInt(b.rank) || 999));
+
+            mg.innerHTML = managers.map(m => `
+                <div class="member">
+                    <img src="${m.image || '../assets/management.png'}" alt="${(m.name||'').replace(/"/g,'')}">
+                    <h4>${m.name}</h4>
+                    <p>${m.title}</p>
+                    <p style="font-size: 0.8rem; color: var(--accent-primary); margin-top: 0.25rem;">Rank: ${m.rank || 'N/A'}</p>
+                    <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
+                        <button class="btn btn-outline" onclick="editManager(${m.id})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteManager(${m.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('') || '<div style="grid-column:1/-1; color:var(--text-secondary);">No management officers yet.</div>';
+
+            ac.innerHTML = council.map(c => `
+                <div class="member">
+                    <img src="${c.image || '../assets/management.png'}" alt="${(c.name||'').replace(/"/g,'')}">
+                    <h4>${c.name}</h4>
+                    <p>${c.title}</p>
+                    <p style="font-size: 0.8rem; color: var(--accent-primary); margin-top: 0.25rem;">Rank: ${c.rank || 'N/A'}</p>
+                    <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
+                        <button class="btn btn-outline" onclick="editCouncil(${c.id})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteCouncil(${c.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('') || '<div style="grid-column:1/-1; color:var(--text-secondary);">No advisory council members yet.</div>';
+        }
+
+        document.getElementById('add-officer').addEventListener('click', () => {
+            const formHtml = `
+                <div class="form-group"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Sort Order (Rank)</label><input type="number" name="rank" class="form-control" placeholder="e.g. 1 for highest" value="10"></div>
+                <div class="form-group"><label class="form-label">Photo</label><input type="file" name="image" accept="image/*, .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .ico" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Bio</label><textarea name="bio" class="form-control" rows="3"></textarea></div>
+            `;
+            showModal('Add Management Officer', formHtml, (formData) => {
+                return readImageAsDataUrl(formData.get('image')).then(img => {
+                    const newId = (MOCK_DB.managementTeam && MOCK_DB.managementTeam.length>0) ? Math.max(...MOCK_DB.managementTeam.map(x=>x.id))+1 : 1;
+                    MOCK_DB.managementTeam = MOCK_DB.managementTeam || [];
+                    MOCK_DB.managementTeam.push({ id: newId, name: formData.get('name'), title: formData.get('title'), rank: parseInt(formData.get('rank')) || 10, bio: formData.get('bio'), image: img });
+                    saveDB(); renderLists();
+                });
+            });
+        });
+
+        document.getElementById('add-council').addEventListener('click', () => {
+            const formHtml = `
+                <div class="form-group"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Sort Order (Rank)</label><input type="number" name="rank" class="form-control" placeholder="e.g. 1 for highest" value="10"></div>
+                <div class="form-group"><label class="form-label">Photo</label><input type="file" name="image" accept="image/*, .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .ico" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Bio</label><textarea name="bio" class="form-control" rows="3"></textarea></div>
+            `;
+            showModal('Add Advisory Council Member', formHtml, (formData) => {
+                return readImageAsDataUrl(formData.get('image')).then(img => {
+                    const newId = (MOCK_DB.advisoryCouncil && MOCK_DB.advisoryCouncil.length>0) ? Math.max(...MOCK_DB.advisoryCouncil.map(x=>x.id))+1 : 1;
+                    MOCK_DB.advisoryCouncil = MOCK_DB.advisoryCouncil || [];
+                    MOCK_DB.advisoryCouncil.push({ id: newId, name: formData.get('name'), title: formData.get('title'), rank: parseInt(formData.get('rank')) || 10, bio: formData.get('bio'), image: img });
+                    saveDB(); renderLists();
+                });
+            });
+        });
+
+        function editManager(id) {
+            const m = (MOCK_DB.managementTeam||[]).find(x=>x.id===id); if(!m) return;
+            const formHtml = `
+                <div class="form-group"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required value="${(m.name||'').replace(/"/g,'')}"></div>
+                <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required value="${(m.title||'').replace(/"/g,'')}"></div>
+                <div class="form-group"><label class="form-label">Sort Order (Rank)</label><input type="number" name="rank" class="form-control" value="${m.rank || 10}"></div>
+                <div class="form-group"><label class="form-label">Replace Photo</label><input type="file" name="image" accept="image/*, .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .ico" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Bio</label><textarea name="bio" class="form-control" rows="3">${(m.bio||'').replace(/"/g,'')}</textarea></div>
+            `;
+            showModal('Edit Management Officer', formHtml, (formData)=>{
+                return readImageAsDataUrl(formData.get('image')).then(img=>{
+                    m.name = formData.get('name'); m.title = formData.get('title'); m.rank = parseInt(formData.get('rank')) || 10; m.bio = formData.get('bio'); if(img) m.image = img; saveDB(); renderLists();
+                });
+            });
+        }
+
+        function editCouncil(id) {
+            const c = (MOCK_DB.advisoryCouncil||[]).find(x=>x.id===id); if(!c) return;
+            const formHtml = `
+                <div class="form-group"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required value="${(c.name||'').replace(/"/g,'')}"></div>
+                <div class="form-group"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required value="${(c.title||'').replace(/"/g,'')}"></div>
+                <div class="form-group"><label class="form-label">Sort Order (Rank)</label><input type="number" name="rank" class="form-control" value="${c.rank || 10}"></div>
+                <div class="form-group"><label class="form-label">Replace Photo</label><input type="file" name="image" accept="image/*, .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .ico" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Bio</label><textarea name="bio" class="form-control" rows="3">${(c.bio||'').replace(/"/g,'')}</textarea></div>
+            `;
+            showModal('Edit Council Member', formHtml, (formData)=>{
+                return readImageAsDataUrl(formData.get('image')).then(img=>{
+                    c.name = formData.get('name'); c.title = formData.get('title'); c.rank = parseInt(formData.get('rank')) || 10; c.bio = formData.get('bio'); if(img) c.image = img; saveDB(); renderLists();
+                });
+            });
+        }
+
+        function deleteManager(id){ if(!confirm('Delete this officer?')) return; MOCK_DB.managementTeam = (MOCK_DB.managementTeam||[]).filter(x=>x.id!==id); saveDB(); renderLists(); }
+        function deleteCouncil(id){ if(!confirm('Delete this member?')) return; MOCK_DB.advisoryCouncil = (MOCK_DB.advisoryCouncil||[]).filter(x=>x.id!==id); saveDB(); renderLists(); }
+
+        document.addEventListener('DOMContentLoaded', ()=>{ renderLists(); });
+    </script>
+</body>
+</html>

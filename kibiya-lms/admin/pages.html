@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Pages - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .CodeMirror {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-family: monospace;
+            width: 100%;
+            height: 300px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center"></div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link">
+                    <i>📊</i> Dashboard
+                </a>
+                <a href="facilitators.html" class="sidebar-link">
+                    <i>👩‍🏫</i> Facilitators
+                </a>
+                <a href="students.html" class="sidebar-link">
+                    <i>🎓</i> Students
+                </a>
+                <a href="courses.html" class="sidebar-link">
+                    <i>📚</i> Courses
+                </a>
+                <a href="pages.html" class="sidebar-link active">
+                    <i>📄</i> Pages (CMS)
+                </a>
+                <a href="settings.html" class="sidebar-link">
+                    <i>⚙️</i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2>Manage Pages</h2>
+                    <p>Edit custom static pages like Home, About Us, and Contact.</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h3>Manage Team & Advisory Council</h3>
+                        <p>Add, edit, and upload photos for management officers and advisory members.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-primary" onclick="addManagementMember('managementTeam')">➕ Add Officer</button>
+                        <button class="btn btn-outline" onclick="addManagementMember('advisoryCouncil')">➕ Add Advisory Member</button>
+                    </div>
+                </div>
+                <div id="management-admin-list"></div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h3>Manage Our Partners</h3>
+                        <p>Add, edit, and upload logos for institutional and global partners.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="addPartner()">➕ Add Partner</button>
+                </div>
+                <div id="partners-admin-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Page Title</th>
+                                <th>Path / ID</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pages-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('admin');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            renderManagementAdmin();
+            renderPartnersAdmin();
+            renderPages();
+        });
+
+        function renderPartnersAdmin() {
+            const container = document.getElementById('partners-admin-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const partners = [...(MOCK_DB.partners || [])].sort((a, b) => (parseInt(a.rank) || 999) - (parseInt(b.rank) || 999));
+            
+            const partnersGrid = document.createElement('div');
+            partnersGrid.className = 'grid grid-cols-2 gap-3';
+            partnersGrid.innerHTML = partners.length > 0 ? partners.map(partner => `
+                <div class="card" style="padding: 1rem;">
+                    <div class="flex justify-between items-center mb-2">
+                        <strong>${partner.name}</strong>
+                        <div class="flex gap-1">
+                            <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="editPartner(${partner.id})">✏️</button>
+                            <button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="deletePartner(${partner.id})">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                        <img src="../${partner.image || 'assets/logo_watermark.png'}" alt="${partner.name}" style="width:70px; height:40px; object-fit:contain; border-radius:4px; border:1px solid var(--border-color); background: #fff; padding: 2px;">
+                        <div>
+                            <div style="font-size:0.9rem; color: var(--accent-primary);">${partner.link ? `<a href="${partner.link}" target="_blank" style="color:var(--accent-primary);">Website ↗</a>` : 'No website link'}</div>
+                            <div style="font-size:0.8rem; color: var(--text-secondary);">${partner.description || 'No description yet.'}</div>
+                            <div style="font-size:0.75rem; color: var(--text-muted);">Sort Order (Rank): ${partner.rank || 10}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('') : '<div style="grid-column: 1 / -1; color: var(--text-secondary); padding: 1rem 0;">No partners added yet.</div>';
+
+            container.appendChild(partnersGrid);
+        }
+
+        function renderManagementAdmin() {
+            const container = document.getElementById('management-admin-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const sections = [
+                { key: 'managementTeam', title: 'Management Officers' },
+                { key: 'advisoryCouncil', title: 'Advisory Council' }
+            ];
+
+            sections.forEach(section => {
+                const members = MOCK_DB[section.key] || [];
+                const sectionCard = document.createElement('div');
+                sectionCard.className = 'card';
+                sectionCard.style.marginBottom = '1rem';
+                sectionCard.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <h4>${section.title}</h4>
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.7rem; font-size: 0.8rem;" onclick="addManagementMember('${section.key}')">➕ Add</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        ${members.length > 0 ? members.map(member => `
+                            <div class="card" style="padding: 1rem;">
+                                <div class="flex justify-between items-center mb-2">
+                                    <strong>${member.name}</strong>
+                                    <div class="flex gap-1">
+                                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="editManagementMember('${section.key}', ${member.id})">✏️</button>
+                                        <button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="deleteManagementMember('${section.key}', ${member.id})">🗑️</button>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                                    <img src="${member.image || '../assets/management.png'}" alt="${member.name}" style="width:56px; height:56px; object-fit:cover; border-radius:50%; border:1px solid var(--border-color);">
+                                    <div>
+                                        <div style="font-size:0.9rem; color: var(--accent-primary);">${member.title}</div>
+                                        <div style="font-size:0.8rem; color: var(--text-secondary);">${member.bio || 'No bio yet.'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') : '<div style="grid-column: 1 / -1; color: var(--text-secondary);">No members added yet.</div>'}
+                    </div>
+                `;
+                container.appendChild(sectionCard);
+            });
+        }
+
+        function renderPages() {
+            const tbody = document.getElementById('pages-table-body');
+            tbody.innerHTML = '';
+            
+            MOCK_DB.pages.forEach(page => {
+                const standalonePages = { 'about-us': 'about-us.html', 'our-courses': 'our-courses.html', 'contact-us': 'contact-us.html' };
+                const href = standalonePages[page.id] ? `../${standalonePages[page.id]}` : `../page.html?id=${page.id}`;
+                const displayPath = standalonePages[page.id] ? `${standalonePages[page.id]}` : `page.html?id=${page.id}`;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${page.title}</td>
+                    <td style="color: var(--text-secondary);">${displayPath}</td>
+                    <td>
+                        <span class="badge ${page.published ? 'badge-success' : 'badge-warning'}">
+                            ${page.published ? 'Published' : 'Draft'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="editPage('${page.id}')">✏️ Edit</button>
+                        <a href="${href}" target="_blank" class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left: 0.5rem;">👁️ View</a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editPage(pageId) {
+            const page = MOCK_DB.pages.find(p => p.id === pageId);
+            if (!page) return;
+
+            const formHtml = `
+                <div class="form-group">
+                    <label class="form-label">Page Title</label>
+                    <input type="text" name="title" class="form-control" required value="${page.title}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Page Content (HTML)</label>
+                    <textarea name="content" class="form-control" style="height: 250px; font-family: monospace; line-height: 1.5; resize: vertical;" required>${page.content}</textarea>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="published" id="published-chk" ${page.published ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
+                    <label for="published-chk" class="form-label" style="margin: 0; cursor: pointer;">Published</label>
+                </div>
+            `;
+
+            showModal('Edit Page: ' + page.title, formHtml, (formData) => {
+                page.title = formData.get('title');
+                page.content = formData.get('content');
+                page.published = formData.get('published') === 'on';
+                
+                saveDB();
+                renderPages();
+                
+                // close modal
+                const modal = document.getElementById('dynamic-modal');
+                if(modal) modal.remove();
+            });
+
+            // Adjust modal width for content editing
+            const modalContent = document.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.maxWidth = '700px';
+            }
+        }
+    </script>
+</body>
+</html>

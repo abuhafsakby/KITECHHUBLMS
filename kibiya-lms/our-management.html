@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Management - Kibiya Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .page-wrapper { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        .hero { text-align: center; margin-bottom: 2.5rem; }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+        .hero p { max-width: 760px; margin: 0 auto; color: var(--text-secondary); line-height: 1.8; }
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+        .team-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem; box-shadow: 0 14px 35px rgba(0,0,0,0.06); text-align: center; }
+        .team-card img { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid var(--accent-primary); margin: 0 auto 1.25rem; display: block; }
+        .team-card h3 { margin: 0 0 0.5rem; }
+        .team-card p { color: var(--text-secondary); line-height: 1.75; }
+        .team-card span { display: inline-block; margin-bottom: 0.75rem; color: var(--accent-primary); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container flex justify-between items-center" style="max-width: 1200px; width: 100%;">
+            <a href="index.html" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                <img src="assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span></a>
+            <div class="nav-profile flex items-center" style="gap: 0.75rem;">
+                <a href="login.html" class="btn btn-outline" style="padding: 0.4rem 1.2rem;">Login</a>
+                <a href="register.html" class="btn btn-primary" style="padding: 0.4rem 1.2rem;">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-wrapper">
+        <section class="hero">
+            <div class="badge badge-success">Leadership</div>
+            <h1>Meet the Team Guiding Kibiya Hub</h1>
+            <p>Our management team brings together industry experience, instructional excellence, and a commitment to student success.</p>
+        </section>
+
+        <!-- Executive Leadership -->
+        <h2 style="text-align: center; margin-bottom: 1.5rem;">Executive Leadership</h2>
+        <div style="display: flex; justify-content: center; margin-bottom: 2.5rem; width: 100%;">
+            <article class="team-card" style="max-width: 340px; width: 100%;">
+                <img src="assets/management.png" alt="Bashir Ado Kibiya">
+                <h3>Bashir Ado Kibiya</h3>
+                <span>CEO</span>
+                <p>Leads strategy, operations, and institutional growth with a focus on innovation.</p>
+            </article>
+        </div>
+
+        <style>
+            .team-grid-three {
+                display: grid; gap: 1.5rem; grid-template-columns: 1fr; margin-bottom: 3rem;
+            }
+            @media (min-width: 576px) {
+                .team-grid-three { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (min-width: 992px) {
+                .team-grid-three { grid-template-columns: repeat(3, 1fr); }
+            }
+            .section-title { text-align: center; margin-bottom: 1.5rem; }
+        </style>
+
+        <!-- Board of Directors -->
+        <h2 class="section-title">Board of Directors</h2>
+        <div class="team-grid-three">
+            <article class="team-card">
+                <img src="assets/management.png" alt="Dr Isyaku Ibrahim">
+                <h3>Dr Isyaku Ibrahim</h3>
+                <span>Board Member / Practice lead design for Health</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Yakubu Isyaku">
+                <h3>Yakubu Isyaku</h3>
+                <span>Board Member / Academic Registrar</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Umar Bashir Sani">
+                <h3>Umar Bashir Sani</h3>
+                <span>Board Member / Head of ICT & Ecosystem</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Legal Adviser">
+                <h3>Legal Adviser</h3>
+                <span>Legal Adviser</span>
+                <p></p>
+            </article>
+        </div>
+
+        <!-- Key Program & Practice lead -->
+        <h2 class="section-title">Key Program & Practice Lead</h2>
+        <div class="team-grid-three">
+            <article class="team-card">
+                <img src="assets/management.png" alt="Yunusa Balarabe">
+                <h3>Yunusa Balarabe</h3>
+                <span>Head of Operations / Program Officer TVET</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Dahiru Adam">
+                <h3>Dahiru Adam</h3>
+                <span>Program Officer ITF SUPA</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Jaafar Idris">
+                <h3>Jaafar Idris</h3>
+                <span>Practice lead Education</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Mohamed Ahmad">
+                <h3>Mohamed Ahmad</h3>
+                <span>Internal Strategic Lead</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Usman Lawan Kibiya">
+                <h3>Usman Lawan Kibiya</h3>
+                <span>Director Linkages / Head Of Community</span>
+                <p></p>
+            </article>
+            <article class="team-card">
+                <img src="assets/management.png" alt="Umar Ibrahim">
+                <h3>Umar Ibrahim</h3>
+                <span>Programme Manager Startup Support</span>
+                <p></p>
+            </article>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-top">
+            <div class="footer-contact-grid">
+                <div class="footer-contact-item"><div class="footer-icon">✉️</div><p>hello@example.com</p></div>
+                <div class="footer-contact-item"><div class="footer-icon">📞</div><p>+1 (555) 123-4567</p></div>
+                <div class="footer-contact-item"><div class="footer-icon">📍</div><p>123 Learning Way,<br>City, Country</p></div>
+            </div>
+        </div>
+        <div class="container footer-links">
+            <div><h4>Quick Links</h4><a href="about-us.html">About Us</a><a href="our-courses.html">Our Courses</a><a href="galleries.html">Galleries</a></div>
+            <div><h4>More</h4><a href="contact-us.html">Contact Us</a><a href="index.html">Home</a></div>
+        </div>
+        <div class="container footer-bottom">© 2026 Kibiya Hub. All rights reserved.</div>
+    </footer>
+</body>
+</html>
+

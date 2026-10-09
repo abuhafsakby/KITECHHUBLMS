@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Facilitators - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center"></div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link">
+                    <i>📊</i> Dashboard
+                </a>
+                <a href="facilitators.html" class="sidebar-link active">
+                    <i>👩‍🏫</i> Facilitators
+                </a>
+                <a href="students.html" class="sidebar-link">
+                    <i>🎓</i> Students
+                </a>
+                <a href="courses.html" class="sidebar-link">
+                    <i>📚</i> Courses
+                </a>
+                <a href="pages.html" class="sidebar-link">
+                    <i>📄</i> Pages (CMS)
+                </a>
+                <a href="settings.html" class="sidebar-link">
+                    <i>⚙️</i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2>Manage Facilitators</h2>
+                    <p>View, add, and manage course facilitators.</p>
+                </div>
+                <button class="btn btn-primary" onclick="addFacilitator()">➕ Add Facilitator</button>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Assigned Courses</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fac-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('admin');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('fac-table-body');
+            const facilitators = MOCK_DB.users.filter(u => u.role === 'facilitator');
+            
+            facilitators.forEach(fac => {
+                const assigned = MOCK_DB.courses.filter(c => c.facilitatorId === fac.id).length;
+                const avatarHtml = fac.image
+                    ? `<img src="${fac.image}" alt="${fac.name}" style="width:40px; height:40px; object-fit:cover; border-radius:50%;">`
+                    : `<span style="display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; border-radius:50%; background:rgba(255,255,255,0.08); color:var(--text-secondary); font-weight:700;">${fac.name.split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase()}</span>`;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${avatarHtml}</td>
+                    <td style="font-weight: 500;">${fac.name}</td>
+                    <td style="color: var(--text-secondary);">${fac.email}</td>
+                    <td>${assigned}</td>
+                    <td><span style="color: var(--accent-primary);">Active</span></td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="editUser(${fac.id})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left:0.25rem;" onclick="deleteUser(${fac.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    </script>
+</body>
+</html>

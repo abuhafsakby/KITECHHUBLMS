@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facilitator Dashboard - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .section-panel { display: none; }
+        .section-panel.active { display: block; }
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .stat-icon.primary { background: rgba(16, 185, 129, 0.1); color: var(--accent-primary); }
+        .stat-icon.secondary { background: rgba(59, 130, 246, 0.1); color: var(--accent-secondary); }
+        .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); }
+
+        /* Dark Theme Table Styling */
+        .grading-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .grading-table th, .grading-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .grading-table th {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        .grading-table tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center"></div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link active" id="nav-dashboard" onclick="showSection('dashboard', this)">
+                    <i>📊</i> My Dashboard
+                </a>
+                <a href="#" class="sidebar-link" id="nav-courses" onclick="showSection('courses', this)">
+                    <i>📚</i> My Courses
+                </a>
+                <a href="#" class="sidebar-link" id="nav-grading" onclick="showSection('grading', this)">
+                    <i>📝</i> Grading
+                </a>
+                <a href="#" class="sidebar-link" id="nav-settings" onclick="showSection('settings', this)">
+                    <i>⚙️</i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <!-- PANEL: DASHBOARD OVERVIEW -->
+            <div id="panel-dashboard" class="section-panel active">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2>Facilitator Overview</h2>
+                        <p>Welcome back! Here is a summary of your courses and student progress.</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="openProfilePhotoModal()">Upload Profile Photo</button>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-3 gap-3 mb-4" id="dashboard-stats">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="card mt-4">
+                    <h3>💡 Quick Actions & Tips</h3>
+                    <ul style="list-style-type: disc; margin-left: 1.5rem; color: var(--text-secondary); margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <li>To manage your course content, upload learning files, or setup quizzes and final exams, click the <strong style="color: var(--accent-primary);">My Courses</strong> tab.</li>
+                        <li>To review student completion rates, exam scores, and update grades manually, navigate to the <strong style="color: var(--accent-primary);">Grading</strong> tab.</li>
+                        <li>Course statistics and grading updates sync automatically to the platform's local database.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- PANEL: MY COURSES -->
+            <div id="panel-courses" class="section-panel">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2>My Courses</h2>
+                        <p>Manage your assigned courses, update modules, and configure quizzes.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3" id="course-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- PANEL: GRADING -->
+            <div id="panel-grading" class="section-panel">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2>Student Grading & Performance</h2>
+                        <p>Track student learning progress and assign grades for course completion.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="table-container">
+                        <table class="grading-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Course</th>
+                                    <th>Progress</th>
+                                    <th>Final Score</th>
+                                    <th>Status</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grading-list">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: SETTINGS -->
+            <div id="panel-settings" class="section-panel">
+                <h2 class="mb-1">Settings</h2>
+                <p class="mb-4">Manage your account and preferences.</p>
+
+                <div class="card" style="max-width:640px;">
+                    <!-- Profile Information -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">👤 Profile Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="settings-name" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" id="settings-email" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profile Picture</label>
+                            <input type="file" id="settings-image" class="form-control" accept="image/*">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveProfile()">💾 Save Profile</button>
+                    </div>
+
+                    <!-- Change Password -->
+                    <div>
+                        <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">🔒 Change Password</h3>
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" id="settings-current-pw" class="form-control" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" id="settings-new-pw" class="form-control" placeholder="••••••••">
+                        </div>
+                        <button class="btn btn-secondary" onclick="changePassword()">🔑 Update Password</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('facilitator');
+
+        const user = getCurrentUser();
+
+        // ─── SECTION SWITCHING ──────────────────────────────────────────────
+        function showSection(name, link) {
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(a => a.classList.remove('active'));
+            
+            const targetPanel = document.getElementById('panel-' + name);
+            if (targetPanel) targetPanel.classList.add('active');
+            
+            if (link) {
+                link.classList.add('active');
+            } else {
+                const navBtn = document.getElementById('nav-' + name);
+                if (navBtn) navBtn.classList.add('active');
+            }
+
+            // Sync URL query param without page reload
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?tab=' + name;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDashboard();
+            renderCourses();
+            renderGrading();
+            renderSettings();
+
+            // Load panel based on URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialTab = urlParams.get('tab') || 'dashboard';
+            showSection(initialTab, document.getElementById('nav-' + initialTab));
+        });
+
+        // ─── RENDER DASHBOARD OVERVIEW ──────────────────────────────────────
+        function renderDashboard() {
+            const myCourses = MOCK_DB.courses.filter(c => c.facilitatorId === user.id);
+            const myCourseIds = myCourses.map(c => c.id);
+            const myEnrollments = MOCK_DB.enrollments.filter(e => myCourseIds.includes(e.courseId));
+            
+            const completedCount = myEnrollments.filter(e => e.completed).length;
+            const activeGrades = myEnrollments.filter(e => e.score !== null).map(e => e.score);
+            const avgGrade = activeGrades.length 
+                ? Math.round(activeGrades.reduce((a, b) => a + b, 0) / activeGrades.length) + '%' 
+                : 'N/A';
+
+            const statsContainer = document.getElementById('dashboard-stats');
+            statsContainer.innerHTML = `
+                <div class="card stat-card">
+                    <div class="stat-icon primary">📚</div>
+                    <div>
+                        <h3>${myCourses.length}</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Assigned Courses</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon secondary">👥</div>
+                    <div>
+                        <h3>${myEnrollments.length}</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Enrolled Students</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon warning">⭐</div>
+                    <div>
+                        <h3>${avgGrade}</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Class Avg Grade</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ─── RENDER COURSE LIST ─────────────────────────────────────────────
+        function renderCourses() {
+            const courseList = document.getElementById('course-list');
+            courseList.innerHTML = '';
+            
+            const myCourses = MOCK_DB.courses.filter(c => c.facilitatorId === user.id);
+            
+            if (myCourses.length === 0) {
+                courseList.innerHTML = `<p style="grid-column: 1/-1; text-align: center; padding: 2rem;">You have no assigned courses.</p>`;
+            } else {
+                myCourses.forEach(course => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="badge badge-primary">Course ID: ${course.id}</span>
+                            <span style="color: var(--text-secondary); font-size: 0.8rem;">${course.modules.length} Modules</span>
+                        </div>
+                        <h3>${course.title}</h3>
+                        <p>${course.description}</p>
+                        <div class="mt-3" style="display:grid; gap:0.75rem;">
+                            <a href="course-edit.html?id=${course.id}" class="btn btn-primary" style="width: 100%;">Manage Course Modules & Exams</a>
+                            <button class="btn btn-outline" style="width: 100%;" onclick="viewCourseQuizSummary(${course.id})">👁️ View Course Quizzes</button>
+                        </div>
+                    `;
+                    courseList.appendChild(card);
+                });
+            }
+        }
+
+        function viewCourseQuizSummary(courseId) {
+            const course = MOCK_DB.courses.find(c => c.id === courseId);
+            if (!course) return;
+
+            const moduleSummaries = (course.modules || []).map((mod, index) => {
+                const quizCount = mod.quiz && mod.quiz.questions ? mod.quiz.questions.length : 0;
+                return `
+                    <div class="question-block" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+                        <div class="flex justify-between items-center mb-2">
+                            <strong>Module ${index + 1}: ${mod.title}</strong>
+                            <span>${quizCount} question${quizCount !== 1 ? 's' : ''}</span>
+                        </div>
+                        ${quizCount > 0 ? `<div style="color: var(--text-secondary);">${mod.quiz.questions.map((q, qIndex) => `<div style="margin-bottom:0.5rem;">${qIndex + 1}. ${q.q}</div>`).join('')}</div>` : '<div style="color: var(--accent-warning);">No module quiz configured.</div>'}
+                    </div>
+                `;
+            }).join('');
+
+            const finalExamQuestions = course.finalExam && course.finalExam.questions ? course.finalExam.questions : [];
+            const finalExamHtml = finalExamQuestions.length > 0
+                ? `<div class="question-block" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+                        <div class="flex justify-between items-center mb-2">
+                            <strong>Final Exam</strong>
+                            <span>${finalExamQuestions.length} question${finalExamQuestions.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div style="color: var(--text-secondary);">${finalExamQuestions.map((q, qIndex) => `<div style="margin-bottom:0.5rem;">${qIndex + 1}. ${q.q}</div>`).join('')}</div>
+                   </div>`
+                : '<div style="color: var(--accent-warning);">No final exam configured.</div>';
+
+            const existing = document.getElementById('dynamic-modal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.id = 'dynamic-modal';
+            overlay.innerHTML = `
+                <div class="modal-content" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
+                    <div class="modal-header">
+                        <h3>Quiz Summary: ${course.title}</h3>
+                        <button class="modal-close" onclick="document.getElementById('dynamic-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="overflow-y:auto; padding: 1.5rem;">
+                        ${moduleSummaries || '<p style="color: var(--text-secondary);">No modules or quizzes defined for this course.</p>'}
+                        <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+                        ${finalExamHtml}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('dynamic-modal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        // ─── RENDER GRADING TABLE ───────────────────────────────────────────
+        function renderGrading() {
+            const gradingList = document.getElementById('grading-list');
+            gradingList.innerHTML = '';
+
+            const myCourses = MOCK_DB.courses.filter(c => c.facilitatorId === user.id);
+            const myCourseIds = myCourses.map(c => c.id);
+            const myEnrollments = MOCK_DB.enrollments.filter(e => myCourseIds.includes(e.courseId));
+
+            if (myEnrollments.length === 0) {
+                gradingList.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 3rem;">
+                            No students are currently enrolled in your courses.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            myEnrollments.forEach(enrollment => {
+                const student = MOCK_DB.users.find(u => u.id === enrollment.studentId);
+                const course = MOCK_DB.courses.find(c => c.id === enrollment.courseId);
+                if (!student || !course) return;
+
+                const scoreText = enrollment.score !== null ? `${enrollment.score}%` : '<span style="color: var(--text-muted);">Not Graded</span>';
+                const statusBadge = enrollment.completed 
+                    ? '<span class="badge badge-success">Completed</span>' 
+                    : '<span class="badge badge-warning">In Progress</span>';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: 600;">${student.name}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">${student.email}</div>
+                    </td>
+                    <td>${course.title}</td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <div style="background: rgba(255,255,255,0.06); width: 80px; height: 6px; border-radius: 3px; overflow: hidden;">
+                                <div style="background: var(--accent-primary); width: ${enrollment.progress}%; height: 100%;"></div>
+                            </div>
+                            <span style="font-size: 0.8rem; font-weight: 500;">${enrollment.progress}%</span>
+                        </div>
+                    </td>
+                    <td><strong>${scoreText}</strong></td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="openGradeModal(${student.id}, ${course.id})">✏️ Update Grade</button>
+                    </td>
+                `;
+                gradingList.appendChild(tr);
+            });
+        }
+
+        // ─── OPEN GRADING MODAL ─────────────────────────────────────────────
+        function openGradeModal(studentId, courseId) {
+            const enrollment = MOCK_DB.enrollments.find(e => e.studentId === studentId && e.courseId === courseId);
+            if (!enrollment) return;
+
+            const student = MOCK_DB.users.find(u => u.id === studentId);
+            const course = MOCK_DB.courses.find(c => c.id === courseId);
+
+            const formHtml = `
+                <div class="form-group">
+                    <label class="form-label">Student Name</label>
+                    <input type="text" class="form-control" disabled value="${student ? student.name : 'Unknown Student'}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Course</label>
+                    <input type="text" class="form-control" disabled value="${course ? course.title : 'Unknown Course'}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Course Progress (%) *</label>
+                    <input type="number" name="progress" min="0" max="100" class="form-control" value="${enrollment.progress}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Final Exam Score (%)</label>
+                    <input type="number" name="score" min="0" max="100" class="form-control" value="${enrollment.score !== null ? enrollment.score : ''}" placeholder="Leave blank if not graded">
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="completed" ${enrollment.completed ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
+                        Mark Course as Completed
+                    </label>
+                </div>
+            `;
+
+            showModal('Update Student Progress & Grade', formHtml, (formData) => {
+                const progress = parseInt(formData.get('progress'));
+                const scoreVal = formData.get('score');
+                const score = scoreVal === '' ? null : parseInt(scoreVal);
+                const completed = formData.get('completed') === 'on';
+
+                enrollment.progress = progress;
+                enrollment.score = score;
+                enrollment.completed = completed;
+
+                if (completed && enrollment.progress < 100) {
+                    enrollment.progress = 100;
+                }
+
+                saveDB();
+                renderDashboard();
+                renderGrading();
+
+                const modal = document.getElementById('dynamic-modal');
+                if (modal) modal.remove();
+            });
+        }
+
+        // ─── SETTINGS PANEL FUNCTIONS ───────────────────────────────────────
+        function renderSettings() {
+            if (user) {
+                document.getElementById('settings-name').value = user.name || '';
+                document.getElementById('settings-email').value = user.email || '';
+            }
+        }
+
+        function saveProfile() {
+            const newName = document.getElementById('settings-name').value.trim();
+            const newEmail = document.getElementById('settings-email').value.trim();
+            if (!newName || !newEmail) { alert('Name and email cannot be empty.'); return; }
+
+            const dbUser = MOCK_DB.users.find(u => u.id === user.id);
+            if (!dbUser) return;
+
+            const imageFile = document.getElementById('settings-image').files[0];
+            const saveChanges = () => {
+                dbUser.name = newName;
+                dbUser.email = newEmail;
+                saveDB();
+                localStorage.setItem('kibiya_user', JSON.stringify(dbUser));
+                alert('✅ Profile updated successfully!');
+                window.location.reload();
+            };
+
+            if (imageFile) {
+                readImageAsDataUrl(imageFile).then(imageData => {
+                    dbUser.image = imageData;
+                    saveChanges();
+                });
+            } else {
+                saveChanges();
+            }
+        }
+
+        function changePassword() {
+            const current = document.getElementById('settings-current-pw').value;
+            const newPw = document.getElementById('settings-new-pw').value;
+            const dbUser = MOCK_DB.users.find(u => u.id === user.id);
+
+            if (!dbUser || dbUser.password !== current) {
+                alert('❌ Current password is incorrect.'); return;
+            }
+            if (newPw.length < 6) {
+                alert('❌ New password must be at least 6 characters.'); return;
+            }
+            dbUser.password = newPw;
+            saveDB();
+            document.getElementById('settings-current-pw').value = '';
+            document.getElementById('settings-new-pw').value = '';
+            alert('✅ Password changed successfully!');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Kibiya Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .page-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .page-header p {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .page-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .page-sidebar {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: 1.75rem;
+        }
+
+        .page-sidebar h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+
+        .sidebar-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-links li {
+            margin-bottom: 0.85rem;
+        }
+
+        .sidebar-links a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-links a:hover {
+            text-decoration: underline;
+        }
+
+        .content-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+        }
+
+        .content-panel img {
+            width: 100%;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .content-panel h2,
+        .content-panel h3 {
+            color: var(--accent-primary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-panel p {
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+
+        .content-panel .highlight-box {
+            background: rgba(15, 74, 143, 0.08);
+            border-left: 4px solid var(--accent-primary);
+            padding: 1rem 1.25rem;
+            margin-top: 1.5rem;
+            border-radius: 0.75rem;
+        }
+
+        @media (max-width: 900px) {
+            .page-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-sidebar {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container flex justify-between items-center" style="max-width: 1200px; width: 100%;">
+            <a href="index.html" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <img src="assets/kibiya_logo.png" alt="Kibiya Hub"
+                    style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </a>
+
+            <div class="nav-profile flex items-center" id="auth-section" style="gap: 0.75rem;">
+                <a href="login.html" class="btn btn-outline" style="padding: 0.4rem 1.2rem;">Login</a>
+                <a href="login.html" class="btn btn-primary" style="padding: 0.4rem 1.2rem;">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+
+
+    <main class="page-wrapper">
+        <div class="page-header">
+            <h1>About-Us Kibiya Hub</h1>
+            <p>Founded to bridge the gap between practical skills and real-world technology demands, Kibiya Hub
+                began as a hands-on innovation center. Today, it is a trusted technology and education hub
+                delivering career-ready training across web development, engineering, security, and more.</p>
+        </div>
+
+        <div class="page-grid">
+            <aside class="page-sidebar">
+                <h3>Quick Links</h3>
+                <ul class="sidebar-links">
+                    <li><a href="about-us.html">About Kibiya Hub</a></li>
+                    <li><a href="our-courses.html">Our Courses</a></li>
+                    <li><a href="galleries.html">Galleries</a></li>
+                    <li><a href="our-management.html">Our Management</a></li>
+                    <li><a href="contact-us.html">Contact Us</a></li>
+                </ul>
+
+                <div class="highlight-box">
+                    <strong>Our promise:</strong>
+                    <p>We deliver practical, industry-aligned training through expert facilitators, responsive
+                        support, and a platform designed for meaningful progress.</p>
+                </div>
+            </aside>
+
+            <section class="content-panel">
+                <img src="assets/featured.png" alt="About Kibiya Hub">
+                <h2>A Short History of Kibiya Hub</h2>
+                <p>Founded to bridge the gap between practical skills and real-world technology demands, Kibiya Hub
+                    began as a small innovation center with a focus on hands-on learning. Today, it has grown into a
+                    trusted technology and education hub delivering career-ready training in web development,
+                    engineering, security, and more.</p>
+
+                <h3>Our Mission</h3>
+                <p>We equip learners with the knowledge and confidence to thrive in modern tech careers. Our mission
+                    is to deliver practical, industry-aligned training through expert facilitators, responsive
+                    support, and a platform designed for meaningful progress.</p>
+
+                <h3>Our Vision</h3>
+                <p>Kibiya Hub aims to become the leading destination for transformational tech education in the
+                    region, empowering a new generation of innovators, entrepreneurs, and professionals with the
+                    skills to shape the future.</p>
+            </section>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-top">
+            <div class="footer-contact-grid">
+                <div class="footer-contact-item">
+                    <div class="footer-icon">✉️</div>
+                    <p>hello@example.com</p>
+                </div>
+                <div class="footer-contact-item">
+                    <div class="footer-icon">📞</div>
+                    <p>+1 (555) 123-4567</p>
+                </div>
+                <div class="footer-contact-item">
+                    <div class="footer-icon">📍</div>
+                    <p>123 Learning Way,<br>City, Country</p>
+                </div>
+            </div>
+        </div>
+        <div class="container footer-links">
+            <div>
+                <h4>Quick Links</h4>
+                <a href="our-courses.html">Our Courses</a>
+                <a href="contact-us.html">Contact Us</a>
+                <a href="galleries.html">Gallery</a>
+                <a href="about-us.html">Who We Are</a>
+                <a href="page.html?id=our-partners">Partners</a>
+            </div>
+            <div>
+                <h4>More</h4>
+                <a href="our-management.html">Management</a>
+                <a href="our-courses.html">Course Catalog</a>
+                <a href="contact-us.html">Support</a>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            © 2026 Kibiya Hub. All rights reserved.
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Courses - Kibiya Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .page-wrapper { max-width: 1150px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        .hero { display: grid; gap: 1.5rem; align-items: center; margin-bottom: 2.5rem; }
+        .hero-content { max-width: 700px; }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.05rem; line-height: 1.8; color: var(--text-secondary); }
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .course-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+        .course-card h3 { margin: 0 0 0.75rem; }
+        .course-card p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; }
+        .course-card .badge { margin-bottom: 1rem; display: inline-block; }
+        .gallery-banner { width: 100%; border-radius: 1rem; box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container flex justify-between items-center" style="max-width: 1200px; width: 100%;">
+            <a href="index.html" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                <img src="assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span></a>
+            <div class="nav-profile flex items-center" style="gap: 0.75rem;">
+                <a href="login.html" class="btn btn-outline" style="padding: 0.4rem 1.2rem;">Login</a>
+                <a href="register.html" class="btn btn-primary" style="padding: 0.4rem 1.2rem;">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-wrapper">
+        <section class="hero">
+            <div class="hero-content">
+                <div class="badge badge-success">Featured Courses</div>
+                <h1>Explore Practical Courses Built for Work</h1>
+                <p>Discover a broad portfolio of programs designed to train students for real jobs across technology, engineering, hospitality, and design.</p>
+                <a href="register.html" class="btn btn-primary">Enroll Now</a>
+            </div>
+            <img src="assets/featured.png" alt="Our Courses" class="gallery-banner">
+        </section>
+
+        <section class="course-grid" id="courses-container">
+            <!-- Populated by JS -->
+        </section>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('courses-container');
+            const user = getCurrentUser();
+            const enrollments = user ? MOCK_DB.enrollments.filter(e => e.studentId === user.id) : [];
+
+            container.innerHTML = MOCK_DB.courses.map(course => {
+                const isEnrolled = enrollments.some(e => e.courseId === course.id);
+                let buttonHtml = '';
+                
+                if (user && user.role === 'student') {
+                    if (isEnrolled) {
+                        buttonHtml = `<a href="student/course.html?id=${course.id}" class="btn btn-success" style="width: 100%; text-align: center; justify-content: center;">▶ Continue Course</a>`;
+                    } else {
+                        buttonHtml = `<button onclick="enrollDirectly(${course.id}, '${course.title.replace(/'/g, "\\'")}')" class="btn btn-primary" style="width: 100%;">🚀 Quick Enroll</button>`;
+                    }
+                } else {
+                    buttonHtml = `<a href="register.html?courseId=${course.id}" class="btn btn-secondary" style="width: 100%; text-align: center; justify-content: center;">Enroll Now</a>`;
+                }
+
+                // Map category/badge based on title or course
+                let category = 'Course';
+                const titleLower = course.title.toLowerCase();
+                if (titleLower.includes('web')) category = 'Web Dev';
+                else if (titleLower.includes('elect')) category = 'Electrical';
+                else if (titleLower.includes('cater') || titleLower.includes('hosp')) category = 'Hospitality';
+                else if (titleLower.includes('net') || titleLower.includes('sec')) category = 'Security';
+                else if (titleLower.includes('weld')) category = 'Welding';
+                else if (titleLower.includes('cool') || titleLower.includes('air')) category = 'AC & Fridge';
+                else if (titleLower.includes('cctv') || titleLower.includes('sat')) category = 'CCTV & Sat';
+                else if (titleLower.includes('phone') || titleLower.includes('gsm') || titleLower.includes('hard')) category = 'Repairs';
+                else if (titleLower.includes('leather')) category = 'Leather';
+                else if (titleLower.includes('farm') || titleLower.includes('stock')) category = 'Farming';
+
+                return `
+                    <article class="course-card">
+                        <span class="badge badge-primary">${category}</span>
+                        <h3>${course.title}</h3>
+                        <p>${course.description || 'A practical course designed to build real-world skills.'}</p>
+                        ${buttonHtml}
+                    </article>
+                `;
+            }).join('');
+        });
+    </script>
+
+    <footer class="site-footer">
+        <div class="container footer-top">
+            <div class="footer-contact-grid">
+                <div class="footer-contact-item"><div class="footer-icon">✉️</div><p>hello@example.com</p></div>
+                <div class="footer-contact-item"><div class="footer-icon">📞</div><p>+1 (555) 123-4567</p></div>
+                <div class="footer-contact-item"><div class="footer-icon">📍</div><p>123 Learning Way,<br>City, Country</p></div>
+            </div>
+        </div>
+        <div class="container footer-links">
+            <div><h4>Quick Links</h4><a href="about-us.html">About Us</a><a href="galleries.html">Gallery</a><a href="our-management.html">Management</a></div>
+            <div><h4>More</h4><a href="contact-us.html">Contact Us</a><a href="index.html">Home</a></div>
+        </div>
+        <div class="container footer-bottom">© 2026 Kibiya Hub. All rights reserved.</div>
+    </footer>
+</body>
+</html>

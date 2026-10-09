@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center"></div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link">
+                    <i>📊</i> Dashboard
+                </a>
+                <a href="facilitators.html" class="sidebar-link">
+                    <i>👩‍🏫</i> Facilitators
+                </a>
+                <a href="students.html" class="sidebar-link active">
+                    <i>🎓</i> Students
+                </a>
+                <a href="courses.html" class="sidebar-link">
+                    <i>📚</i> Courses
+                </a>
+                <a href="pages.html" class="sidebar-link">
+                    <i>📄</i> Pages (CMS)
+                </a>
+                <a href="settings.html" class="sidebar-link">
+                    <i>⚙️</i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2>Manage Students</h2>
+                    <p>View student enrollments and progress.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Enrolled Courses</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="std-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('admin');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('std-table-body');
+            const students = MOCK_DB.users.filter(u => u.role === 'student');
+            
+            students.forEach(std => {
+                const enrolled = MOCK_DB.enrollments.filter(e => e.studentId === std.id).length;
+                const avatarHtml = std.image
+                    ? `<img src="${std.image}" alt="${std.name}" style="width:40px; height:40px; object-fit:cover; border-radius:50%;">`
+                    : `<span style="display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; border-radius:50%; background:rgba(255,255,255,0.08); color:var(--text-secondary); font-weight:700;">${std.name.split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase()}</span>`;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${avatarHtml}</td>
+                    <td style="font-weight: 500;">${std.name}</td>
+                    <td style="color: var(--text-secondary);">${std.email}</td>
+                    <td>${enrolled}</td>
+                    <td><span style="color: var(--accent-primary);">Active</span></td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="viewProgress(${std.id})">View Progress</button>
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left:0.25rem;" onclick="editUser(${std.id})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-left:0.25rem;" onclick="deleteUser(${std.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+
+        function viewProgress(studentId) {
+            const student = MOCK_DB.users.find(u => u.id === studentId);
+            if (!student) return;
+
+            const enrollments = MOCK_DB.enrollments.filter(e => e.studentId === studentId);
+            
+            let progressContent = '';
+            if (enrollments.length === 0) {
+                progressContent = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 2rem 1rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
+                        <p style="margin: 0;">This student is not enrolled in any courses yet.</p>
+                    </div>
+                `;
+            } else {
+                let rows = '';
+                enrollments.forEach(e => {
+                    const course = MOCK_DB.courses.find(c => c.id === e.courseId);
+                    const courseTitle = course ? course.title : 'Unknown Course';
+                    const scoreText = e.score !== null ? `${e.score}%` : '<span style="color: var(--text-muted);">N/A</span>';
+                    const statusBadge = e.completed 
+                        ? '<span class="badge badge-success">Completed</span>' 
+                        : '<span class="badge badge-warning">In Progress</span>';
+                    
+                    rows += `
+                        <tr>
+                            <td style="padding: 0.75rem 0.5rem; font-size: 0.9rem; font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${courseTitle}
+                            </td>
+                            <td style="padding: 0.75rem 0.5rem;">
+                                <div class="flex items-center gap-2">
+                                    <div style="background: rgba(255,255,255,0.06); width: 70px; height: 6px; border-radius: 3px; overflow: hidden;">
+                                        <div style="background: var(--accent-primary); width: ${e.progress}%; height: 100%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.8rem; font-weight: 500;">${e.progress}%</span>
+                                </div>
+                            </td>
+                            <td style="padding: 0.75rem 0.5rem; font-weight: 600; font-size: 0.9rem;">
+                                ${scoreText}
+                            </td>
+                            <td style="padding: 0.75rem 0.5rem;">
+                                ${statusBadge}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                progressContent = `
+                    <div class="table-container" style="border: none; background: transparent;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <th style="padding: 0.5rem; font-size: 0.75rem; text-align: left;">Course</th>
+                                    <th style="padding: 0.5rem; font-size: 0.75rem; text-align: left;">Progress</th>
+                                    <th style="padding: 0.5rem; font-size: 0.75rem; text-align: left;">Grade</th>
+                                    <th style="padding: 0.5rem; font-size: 0.75rem; text-align: left;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // Remove existing modal if any
+            const existing = document.getElementById('dynamic-modal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.id = 'dynamic-modal';
+
+            overlay.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <div>
+                            <h3 style="margin-bottom: 0.2rem;">${student.name}'s Progress</h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">${student.email}</p>
+                        </div>
+                        <button class="modal-close" onclick="document.getElementById('dynamic-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 1.5rem 2rem;">
+                        ${progressContent}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('dynamic-modal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+        }
+    </script>
+</body>
+</html>

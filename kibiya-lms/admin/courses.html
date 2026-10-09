@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Courses - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center"></div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link">
+                    <i>📊</i> Dashboard
+                </a>
+                <a href="facilitators.html" class="sidebar-link">
+                    <i>👩‍🏫</i> Facilitators
+                </a>
+                <a href="students.html" class="sidebar-link">
+                    <i>🎓</i> Students
+                </a>
+                <a href="courses.html" class="sidebar-link active">
+                    <i>📚</i> Courses
+                </a>
+                <a href="pages.html" class="sidebar-link">
+                    <i>📄</i> Pages (CMS)
+                </a>
+                <a href="settings.html" class="sidebar-link">
+                    <i>⚙️</i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2>Manage Courses</h2>
+                    <p>Add new courses or assign facilitators.</p>
+                </div>
+                <button class="btn btn-primary" onclick="addCourse()">➕ Add Course</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3" id="admin-course-list">
+                <!-- Populated by JS -->
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('admin');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const courseList = document.getElementById('admin-course-list');
+            MOCK_DB.courses.forEach(course => {
+                const fac = MOCK_DB.users.find(u => u.id === course.facilitatorId);
+                const facName = fac ? fac.name : 'Unassigned';
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="badge badge-primary">Course ID: ${course.id}</span>
+                        <span style="color: var(--text-secondary); font-size: 0.8rem;">${course.modules.length} Modules</span>
+                    </div>
+                    <h3>${course.title}</h3>
+                    <p style="font-size: 0.9rem;">Facilitator: <strong>${facName}</strong></p>
+                    <div class="mt-3 flex gap-1">
+                        <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.8rem;" onclick="editCourse(${course.id})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 0.5rem; font-size: 0.8rem;" onclick="deleteCourse(${course.id})">Delete</button>
+                    </div>
+                `;
+                courseList.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>

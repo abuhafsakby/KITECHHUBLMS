@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Kibiya LMS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 500px;
+            z-index: 10;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="card login-card">
+            <div class="login-logo logo justify-center">
+                <img src="assets/kibiya_logo.png" alt="Kibiya Hub" style="height:56px; width:56px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            
+            <h3 class="text-center mb-1">Create an Account</h3>
+            <p class="text-center mb-3">Register to enroll in a course.</p>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="reg-name" class="form-control" required placeholder="e.g. Jane Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="reg-email" class="form-control" required placeholder="name@domain.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="reg-password" class="form-control" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Select Course to Enroll</label>
+                    <select id="reg-course" class="form-control" style="appearance: none;" required>
+                        <option value="">-- Choose a Course --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">Register & Enroll</button>
+            </form>
+
+            <div class="mt-4 text-center">
+                <p style="font-size: 0.9rem;">Already have an account? <a href="login.html" style="color: var(--accent-primary);">Sign In here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const courseSelect = document.getElementById('reg-course');
+            MOCK_DB.courses.forEach(course => {
+                const opt = document.createElement('option');
+                opt.value = course.id;
+                opt.textContent = course.title;
+                courseSelect.appendChild(opt);
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseIdParam = urlParams.get('courseId');
+            if (courseIdParam) {
+                courseSelect.value = courseIdParam;
+            }
+
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.role === 'student') {
+                // Adjust layout for already logged in student
+                document.querySelector('h3.text-center').textContent = 'Enroll in a Course';
+                document.querySelector('p.text-center').textContent = 'Select a course to add to your dashboard.';
+                
+                // Hide input groups
+                const formGroups = document.querySelectorAll('#register-form .form-group');
+                formGroups.forEach(group => {
+                    const label = group.querySelector('label');
+                    if (label && label.textContent !== 'Select Course to Enroll') {
+                        group.style.display = 'none';
+                        const input = group.querySelector('input');
+                        if (input) input.removeAttribute('required');
+                    }
+                });
+                
+                // Insert User Info Card
+                const form = document.getElementById('register-form');
+                const infoCard = document.createElement('div');
+                infoCard.className = 'card';
+                infoCard.style.padding = '1rem';
+                infoCard.style.marginBottom = '1.5rem';
+                infoCard.style.background = 'rgba(255, 255, 255, 0.05)';
+                infoCard.innerHTML = `
+                    <p style="margin: 0; font-size: 0.95rem;">Enrolling as: <strong>${currentUser.name}</strong></p>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">${currentUser.email}</p>
+                `;
+                form.insertBefore(infoCard, form.firstChild);
+                
+                // Change submit button text
+                document.querySelector('#register-form button[type="submit"]').textContent = 'Enroll Now';
+            }
+
+            document.getElementById('register-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const courseId = parseInt(document.getElementById('reg-course').value);
+
+                if (currentUser && currentUser.role === 'student') {
+                    // Check if already enrolled
+                    const exists = MOCK_DB.enrollments.find(en => en.studentId === currentUser.id && en.courseId === courseId);
+                    if (exists) {
+                        alert("You are already enrolled in this course.");
+                        window.location.href = 'student/dashboard.html';
+                        return;
+                    }
+                    MOCK_DB.enrollments.push({
+                        studentId: currentUser.id,
+                        courseId: courseId,
+                        progress: 0,
+                        completed: false,
+                        score: null,
+                        completedModules: []
+                    });
+                    saveDB();
+                    alert("🎉 Enrolled successfully!");
+                    window.location.href = 'student/dashboard.html';
+                    return;
+                }
+
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+
+                // Create new user
+                const newId = MOCK_DB.users.length > 0 ? Math.max(...MOCK_DB.users.map(u => u.id)) + 1 : 1;
+                const newUser = {
+                    id: newId,
+                    name: name,
+                    email: email,
+                    password: password,
+                    role: "student"
+                };
+                MOCK_DB.users.push(newUser);
+
+                // Enroll in course
+                MOCK_DB.enrollments.push({
+                    studentId: newId,
+                    courseId: courseId,
+                    progress: 0,
+                    completed: false,
+                    score: null,
+                    completedModules: []
+                });
+
+                saveDB();
+
+                // Auto login
+                login(email, password);
+                window.location.href = 'student/dashboard.html';
+            });
+        });
+    </script>
+</body>
+</html>

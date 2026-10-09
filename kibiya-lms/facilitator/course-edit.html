@@ -1,0 +1,600 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Course - Kibiya LMS</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .module-card {
+            border-left: 4px solid var(--accent-primary);
+            margin-bottom: 1.5rem;
+        }
+        .module-card:hover { transform: none; }
+        .action-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+        .exam-card {
+            border-left: 4px solid var(--accent-warning);
+            margin-bottom: 1.5rem;
+        }
+        .exam-card:hover { transform: none; }
+        .question-block {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .question-block .option-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .question-block .option-row input[type="radio"] {
+            accent-color: var(--accent-primary);
+            width: 16px; height: 16px; flex-shrink: 0;
+        }
+        .question-block .option-row input[type="text"] {
+            flex: 1;
+        }
+        .remove-btn {
+            background: none; border: none;
+            color: var(--accent-danger);
+            cursor: pointer; font-size: 1.2rem;
+            padding: 0 0.25rem;
+            transition: var(--transition);
+        }
+        .remove-btn:hover { opacity: 0.7; }
+
+        /* File upload zone */
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: var(--accent-primary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+        .upload-zone .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .upload-zone input[type="file"] { display: none; }
+        .file-chosen {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--accent-primary);
+            word-break: break-all;
+        }
+
+        /* Modal scroll fix for long quiz builders */
+        .modal-content {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 640px;
+        }
+        .modal-body {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .file-badge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(59,130,246,0.15);
+            color: var(--accent-secondary);
+            border-radius: 99px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container" style="max-width: 100%; padding: 0 2rem;">
+            <div class="logo">
+                <img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+            <div class="nav-profile flex items-center"></div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="dashboard.html?tab=courses" class="sidebar-link">
+                    <i>⬅️</i> Back to Dashboard
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-content">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 id="course-title">Loading...</h2>
+                    <p>Add/Update Modules, End-of-Module Quizzes, and the Final Exam.</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddModuleModal()">➕ Add Module</button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4" id="modules-container">
+                <!-- Populated by JS -->
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 3rem 0;">
+
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h3>📝 Final Exam</h3>
+                    <p style="font-size:0.9rem; margin:0;">Manage the end-of-course final exam questions.</p>
+                </div>
+                <button class="btn btn-outline" style="border-color: var(--accent-warning); color: var(--accent-warning);" onclick="openQuizModal(null, true)">➕ Manage Final Exam</button>
+            </div>
+
+            <div class="card exam-card">
+                <div id="exam-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('facilitator');
+
+        let COURSE_ID = null;
+        let COURSE = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            COURSE_ID = parseInt(urlParams.get('id'));
+            COURSE = MOCK_DB.courses.find(c => c.id === COURSE_ID);
+
+            if (!COURSE) {
+                document.body.innerHTML = '<div style="padding:4rem; text-align:center;"><h2>Course Not Found</h2><a href="dashboard.html" class="btn btn-primary" style="margin-top:1rem;">← Back</a></div>';
+                return;
+            }
+
+            renderPage();
+        });
+
+        // ─── RENDER ──────────────────────────────────────────────────────────
+        function renderPage() {
+            document.getElementById('course-title').textContent = 'Manage: ' + COURSE.title;
+            renderModules();
+            renderExam();
+        }
+
+        function renderModules() {
+            const container = document.getElementById('modules-container');
+            container.innerHTML = '';
+
+            if (!COURSE.modules || COURSE.modules.length === 0) {
+                container.innerHTML = `<div class="card" style="text-align:center; padding:3rem;">
+                    <p style="font-size:1.1rem; color: var(--text-muted);">No modules yet. Click <strong>Add Module</strong> to get started.</p>
+                </div>`;
+                return;
+            }
+
+            COURSE.modules.forEach((mod, index) => {
+                const quizCount = (mod.quiz && mod.quiz.questions) ? mod.quiz.questions.length : 0;
+                const fileHtml = mod.fileName
+                    ? `<div class="file-badge">📎 ${mod.fileName}</div>`
+                    : '';
+
+                const card = document.createElement('div');
+                card.className = 'card module-card';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h3>Module ${index + 1}: ${mod.title}</h3>
+                        <span class="badge badge-success">Active</span>
+                    </div>
+                    <p class="mt-1" style="font-size:0.9rem;">${mod.content ? mod.content.substring(0, 100) + '...' : 'No description yet.'}</p>
+                    ${fileHtml}
+                    <div style="margin-top:0.75rem; padding:0.5rem 0.75rem; background:rgba(255,255,255,0.04); border-radius: var(--border-radius); display:inline-block;">
+                        <span style="font-size:0.85rem;">📋 Quiz: <strong>${quizCount} question${quizCount !== 1 ? 's' : ''}</strong></span>
+                    </div>
+                    <div class="action-row">
+                        <button class="btn btn-outline" style="padding:0.4rem 1rem;font-size:0.85rem;" onclick="openEditModuleModal(${mod.id})">✏️ Edit Content</button>
+                        <button class="btn btn-outline" style="padding:0.4rem 1rem;font-size:0.85rem;" onclick="openQuizModal(${mod.id}, false)">${quizCount > 0 ? '✏️ Edit Quiz' : '➕ Add Quiz'}</button>
+                        ${quizCount > 0 ? `<button class="btn btn-secondary" style="padding:0.4rem 1rem;font-size:0.85rem;" onclick="viewQuizQuestions(${mod.id}, false)">👁️ View Quiz</button>` : ''}
+                        <button class="btn btn-outline" style="padding:0.4rem 1rem;font-size:0.85rem;border-color:var(--accent-danger);color:var(--accent-danger);" onclick="deleteModule(${mod.id})">🗑️ Delete</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderExam() {
+            const container = document.getElementById('exam-container');
+            const questions = (COURSE.finalExam && COURSE.finalExam.questions) ? COURSE.finalExam.questions : [];
+            if (questions.length === 0) {
+                container.innerHTML = `<p style="color: var(--accent-warning);">⚠️ No final exam configured yet. Click "Manage Final Exam" to add questions.</p>`;
+                return;
+            }
+            container.innerHTML = `
+                <p>The final exam has <strong>${questions.length} question${questions.length !== 1 ? 's' : ''}</strong>.</p>
+                <div style="margin-top:1rem; margin-bottom:1rem; color:var(--text-secondary);">
+                    ${questions.map(q => `<div style="margin-bottom:0.5rem;">• ${q.q}</div>`).join('')}
+                </div>
+                <button class="btn btn-secondary" onclick="viewQuizQuestions(null, true)">👁️ View Exam Questions</button>
+            `;
+        }
+
+        // ─── ADD MODULE MODAL ─────────────────────────────────────────────────
+        function openAddModuleModal() {
+            const formHtml = buildModuleForm(null);
+            showModal('➕ Add New Module', formHtml, (formData, form) => {
+                const title = formData.get('mod_title');
+                const content = formData.get('mod_content');
+                const fileInput = form.querySelector('#mod-file');
+                const file = fileInput.files.length > 0 ? fileInput.files[0] : null;
+                const fileName = file ? file.name : null;
+
+                const newId = COURSE.modules.length > 0 ? Math.max(...COURSE.modules.map(m => m.id)) + 1 : 1;
+                const moduleData = {
+                    id: newId,
+                    title: title,
+                    content: content,
+                    fileName: fileName,
+                    fileData: '',
+                    quiz: { questions: [] }
+                };
+
+                const saveModule = async () => {
+                    moduleData.fileData = ''; // Keep database light
+                    COURSE.modules.push(moduleData);
+                    saveDB();
+
+                    if (file) {
+                        try {
+                            await saveModuleFile(COURSE.id, newId, file);
+                        } catch (err) {
+                            console.error('Failed to save module file:', err);
+                        }
+                    }
+
+                    renderPage();
+                    document.getElementById('dynamic-modal').remove();
+                };
+                saveModule();
+            });
+        }
+
+        // ─── EDIT MODULE MODAL ────────────────────────────────────────────────
+        function openEditModuleModal(modId) {
+            const mod = COURSE.modules.find(m => m.id === modId);
+            if (!mod) return;
+            const formHtml = buildModuleForm(mod);
+            showModal('✏️ Edit Module', formHtml, (formData, form) => {
+                mod.title = formData.get('mod_title');
+                mod.content = formData.get('mod_content');
+                const fileInput = form.querySelector('#mod-file');
+                const file = fileInput.files.length > 0 ? fileInput.files[0] : null;
+
+                const finishUpdate = async () => {
+                    if (file) {
+                        mod.fileName = file.name;
+                    }
+                    mod.fileData = ''; // Keep database light
+                    saveDB();
+
+                    if (file) {
+                        try {
+                            await saveModuleFile(COURSE.id, mod.id, file);
+                        } catch (err) {
+                            console.error('Failed to save module file:', err);
+                        }
+                    }
+
+                    renderPage();
+                    document.getElementById('dynamic-modal').remove();
+                };
+                finishUpdate();
+            });
+        }
+
+        function buildModuleForm(mod) {
+            return `
+                <div class="form-group">
+                    <label class="form-label">Module Title *</label>
+                    <input type="text" name="mod_title" class="form-control" required placeholder="e.g. Introduction to the Course" value="${mod ? mod.title : ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Module Description / Content *</label>
+                    <textarea name="mod_content" class="form-control" rows="5" required placeholder="Write the full module content here...">${mod ? mod.content : ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Upload Study Material (PDF, Video, Image — Unlimited Size)</label>
+                    <div class="upload-zone" onclick="document.getElementById('mod-file').click()" id="upload-drop-zone">
+                        <div class="upload-icon">📁</div>
+                        <p style="margin:0;">Drag & drop a file here, or <strong style="color:var(--accent-primary);">click to browse</strong></p>
+                        <p style="font-size:0.8rem;margin:0.25rem 0 0;">Supports PDF, MP4, DOCX, PNG, JPG and more</p>
+                        <input type="file" id="mod-file" accept="*/*">
+                        <div class="file-chosen" id="file-chosen-text">${mod && mod.fileName ? '📎 Current: ' + mod.fileName : ''}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ─── DELETE MODULE ────────────────────────────────────────────────────
+        function deleteModule(modId) {
+            if (!confirm('Are you sure you want to delete this module? This cannot be undone.')) return;
+            COURSE.modules = COURSE.modules.filter(m => m.id !== modId);
+            saveDB();
+            deleteModuleFile(COURSE.id, modId).catch(console.error);
+            renderPage();
+        }
+
+        // ─── QUIZ / EXAM BUILDER MODAL ────────────────────────────────────────
+        function openQuizModal(modId, isFinalExam) {
+            const target = isFinalExam ? COURSE.finalExam : COURSE.modules.find(m => m.id === modId);
+            if (!target) return;
+
+            const title = isFinalExam ? '📝 Manage Final Exam' : '📋 Manage Module Quiz';
+
+            questionCounter = 0;
+            const existingQuestionsHtml = (target.questions || []).map((q, i) => buildQuestionHtml(i, q)).join('');
+
+            const formHtml = `
+                <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">
+                    Add multiple-choice questions. Select the ✅ radio button next to the <strong>correct answer</strong>.
+                </p>
+                <div id="questions-list">
+                    ${existingQuestionsHtml}
+                </div>
+                <button type="button" class="btn btn-secondary" style="width:100%;margin-top:0.5rem;" onclick="addQuestionBlock()">➕ Add Question</button>
+            `;
+
+            // Custom modal for quiz (not using standard showModal because we need custom save)
+            const existing = document.getElementById('dynamic-modal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.id = 'dynamic-modal';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <button class="modal-close" onclick="document.getElementById('dynamic-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="quiz-form">${formHtml}</form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('dynamic-modal').remove()">Cancel</button>
+                        <button class="btn btn-primary" onclick="saveQuiz(${modId}, ${isFinalExam})">💾 Save Questions</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Wire drag/drop on upload zones
+            wireFileZone();
+        }
+
+        let questionCounter = 0;
+        function buildQuestionHtml(index, existing) {
+            const qId = 'q_' + (questionCounter++);
+            const qText = existing ? existing.q : '';
+            const opts = existing ? existing.options : ['', '', ''];
+            const answer = existing ? existing.answer : 0;
+
+            const optionsHtml = opts.map((opt, i) => `
+                <div class="option-row">
+                    <input type="radio" name="${qId}_correct" value="${i}" ${answer === i ? 'checked' : ''} title="Mark as correct answer">
+                    <input type="text" class="form-control" name="${qId}_opt_${i}" placeholder="Option ${i + 1}" value="${opt}" required>
+                    ${i >= 2 ? `<button type="button" class="remove-btn" onclick="this.closest('.option-row').remove()">✕</button>` : ''}
+                </div>
+            `).join('');
+
+            return `
+                <div class="question-block" data-qid="${qId}">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="form-label" style="margin:0;">Question ${index + 1}</label>
+                        <button type="button" class="remove-btn" onclick="this.closest('.question-block').remove()" title="Remove question">🗑️</button>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="${qId}_text" placeholder="Enter the question..." value="${qText}" required>
+                    </div>
+                    <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">🟢 Select radio next to the correct answer:</p>
+                    <div class="options-list">
+                        ${optionsHtml}
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="padding:0.3rem 0.75rem;font-size:0.8rem;margin-top:0.5rem;" onclick="addOption(this, '${qId}')">+ Add Option</button>
+                </div>
+            `;
+        }
+
+        function addQuestionBlock() {
+            const list = document.getElementById('questions-list');
+            const count = list.querySelectorAll('.question-block').length;
+            const div = document.createElement('div');
+            div.innerHTML = buildQuestionHtml(count, null);
+            list.appendChild(div.firstElementChild);
+        }
+
+        function addOption(btn, qId) {
+            const optList = btn.previousElementSibling;
+            const currentCount = optList.querySelectorAll('.option-row').length;
+            const div = document.createElement('div');
+            div.className = 'option-row';
+            div.innerHTML = `
+                <input type="radio" name="${qId}_correct" value="${currentCount}" title="Mark as correct answer">
+                <input type="text" class="form-control" name="${qId}_opt_${currentCount}" placeholder="Option ${currentCount + 1}" required>
+                <button type="button" class="remove-btn" onclick="this.closest('.option-row').remove()">✕</button>
+            `;
+            optList.appendChild(div);
+        }
+
+        function viewQuizQuestions(modId, isFinalExam) {
+            const target = isFinalExam ? COURSE.finalExam : COURSE.modules.find(m => m.id === modId);
+            if (!target || !target.questions || target.questions.length === 0) return;
+
+            const title = isFinalExam ? '📝 Final Exam Questions' : `📋 Module Quiz Questions`;
+            const questionsHtml = target.questions.map((q, index) => {
+                return `
+                    <div class="question-block">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="form-label" style="margin:0;">Question ${index + 1}</label>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-control" style="background: var(--bg-secondary); border:none; min-height:3rem;">${q.q}</div>
+                        </div>
+                        <div class="options-list">
+                            ${q.options.map((opt, oIndex) => `
+                                <div class="option-row" style="align-items:flex-start; gap:0.75rem;">
+                                    <span style="width:20px; display:inline-flex; justify-content:center;">${oIndex === q.answer ? '✅' : '▫️'}</span>
+                                    <span style="flex:1;">${opt}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const existing = document.getElementById('dynamic-modal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.id = 'dynamic-modal';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <button class="modal-close" onclick="document.getElementById('dynamic-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        ${questionsHtml}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('dynamic-modal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function saveQuiz(modId, isFinalExam) {
+            const form = document.getElementById('quiz-form');
+            if (!form.reportValidity()) return;
+
+            const questionBlocks = form.querySelectorAll('.question-block');
+            const questions = [];
+
+            questionBlocks.forEach(block => {
+                const qId = block.dataset.qid;
+                const questionText = block.querySelector(`[name="${qId}_text"]`).value.trim();
+                const options = [];
+                let optIdx = 0;
+
+                while (true) {
+                    const optInput = block.querySelector(`[name="${qId}_opt_${optIdx}"]`);
+                    if (!optInput) break;
+                    options.push(optInput.value.trim());
+                    optIdx++;
+                }
+
+                const correctRadio = block.querySelector(`[name="${qId}_correct"]:checked`);
+                const answer = correctRadio ? parseInt(correctRadio.value) : 0;
+
+                if (questionText && options.length >= 2) {
+                    questions.push({ q: questionText, options, answer });
+                }
+            });
+
+            if (isFinalExam) {
+                COURSE.finalExam = { questions };
+            } else {
+                const mod = COURSE.modules.find(m => m.id === modId);
+                if (mod) mod.quiz = { questions };
+            }
+
+            saveDB();
+            renderPage();
+            document.getElementById('dynamic-modal').remove();
+        }
+
+        // ─── FILE UPLOAD DRAG & DROP WIRING ──────────────────────────────────
+        function wireFileZone() {
+            const zone = document.getElementById('upload-drop-zone');
+            const fileInput = document.getElementById('mod-file');
+            const chosenText = document.getElementById('file-chosen-text');
+            if (!zone || !fileInput) return;
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    const f = fileInput.files[0];
+                    const sizeMB = (f.size / 1024 / 1024).toFixed(2);
+                    chosenText.textContent = `✅ ${f.name} (${sizeMB} MB)`;
+                }
+            });
+
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const dt = e.dataTransfer;
+                if (dt.files.length > 0) {
+                    fileInput.files = dt.files;
+                    const f = dt.files[0];
+                    const sizeMB = (f.size / 1024 / 1024).toFixed(2);
+                    chosenText.textContent = `✅ ${f.name} (${sizeMB} MB)`;
+                }
+            });
+        }
+
+        // Override showModal to also wire file zone after injection
+        const _origShowModal = showModal;
+        function showModal(title, formHtml, onSave) {
+            const existing = document.getElementById('dynamic-modal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.id = 'dynamic-modal';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <button class="modal-close" onclick="document.getElementById('dynamic-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="dynamic-modal-form">${formHtml}</form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('dynamic-modal').remove()">Cancel</button>
+                        <button class="btn btn-primary" id="dynamic-modal-save">Save</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            wireFileZone();
+
+            document.getElementById('dynamic-modal-save').addEventListener('click', e => {
+                e.preventDefault();
+                const form = document.getElementById('dynamic-modal-form');
+                if (form.reportValidity()) {
+                    onSave(new FormData(form), form);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

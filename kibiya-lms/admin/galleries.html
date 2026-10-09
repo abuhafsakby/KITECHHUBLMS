@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="../assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Galleries - Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .gallery-manager { max-width: 1000px; margin: 2rem auto; padding: 1rem; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+        .gallery-item { background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: var(--border-radius); text-align: center; }
+        .gallery-item img { width: 100%; height: 140px; object-fit: cover; border-radius: 0.5rem; }
+        .gallery-actions { display:flex; gap:0.5rem; margin-top:0.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container" style="max-width: 1200px;">
+            <a href="dashboard.html" class="logo"><img src="../assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span></a>
+            <div style="margin-left: auto;">
+                <a href="dashboard.html" class="btn btn-outline">← Back to Dashboard</a>
+            </div>
+            <div class="nav-profile"></div>
+        </div>
+    </nav>
+
+    <main class="container gallery-manager">
+        <div class="flex justify-between items-center" style="margin-bottom:1rem;">
+            <h2>Gallery Manager</h2>
+            <div>
+                <button class="btn btn-primary" id="btn-add">➕ Upload Image</button>
+            </div>
+        </div>
+
+        <div id="gallery-list" class="gallery-grid">
+            <!-- items -->
+        </div>
+    </main>
+
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('admin');
+
+        function renderGallery() {
+            const list = document.getElementById('gallery-list');
+            const galleries = MOCK_DB.galleries || [];
+            if (galleries.length === 0) {
+                list.innerHTML = '<div style="grid-column:1/-1; color:var(--text-secondary);">No images uploaded yet.</div>';
+                return;
+            }
+            list.innerHTML = galleries.map(g => `
+                <div class="gallery-item" data-id="${g.id}">
+                    <img src="${g.src}" alt="${(g.caption||'').replace(/"/g,'')}">
+                    <div style="font-size:0.95rem; margin-top:0.5rem;">${g.caption || ''}</div>
+                    <div class="gallery-actions">
+                        <button class="btn btn-outline" onclick="editGallery(${g.id})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteGallery(${g.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('btn-add').addEventListener('click', () => {
+            const formHtml = `
+                <div class="form-group">
+                    <label class="form-label">Image</label>
+                    <input type="file" name="image" accept="image/*, .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .ico" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Caption</label>
+                    <input type="text" name="caption" class="form-control" placeholder="Short caption (optional)">
+                </div>
+            `;
+
+            showModal('Upload Gallery Image', formHtml, (formData) => {
+                return readImageAsDataUrl(formData.get('image')).then(dataUrl => {
+                    const newId = (MOCK_DB.galleries && MOCK_DB.galleries.length > 0) ? Math.max(...MOCK_DB.galleries.map(g=>g.id)) + 1 : 1;
+                    const newItem = { id: newId, src: dataUrl || '', caption: formData.get('caption') };
+                    MOCK_DB.galleries = MOCK_DB.galleries || [];
+                    MOCK_DB.galleries.push(newItem);
+                    saveDB();
+                    renderGallery();
+                });
+            });
+        });
+
+        function editGallery(id) {
+            const gallery = (MOCK_DB.galleries || []).find(g => g.id === id);
+            if (!gallery) return;
+            const formHtml = `
+                <div class="form-group">
+                    <label class="form-label">Replace Image (optional)</label>
+                    <input type="file" name="image" accept="image/*, .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .ico" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Caption</label>
+                    <input type="text" name="caption" class="form-control" value="${(gallery.caption||'').replace(/"/g,'')}">
+                </div>
+            `;
+
+            showModal('Edit Gallery Image', formHtml, (formData) => {
+                let file = formData.get('image');
+                const caption = formData.get('caption');
+                if (file && typeof file.length === 'number' && file.length > 0) {
+                    file = file[0];
+                }
+                const hasImage = file && (
+                    (typeof file === 'string' && file.trim().length > 0) ||
+                    ((file instanceof Blob || (typeof File !== 'undefined' && file instanceof File)) && file.size > 0)
+                );
+                if (hasImage) {
+                    return readImageAsDataUrl(file).then(dataUrl => {
+                        gallery.src = dataUrl;
+                        gallery.caption = caption;
+                        saveDB();
+                        renderGallery();
+                    });
+                } else {
+                    gallery.caption = caption;
+                    saveDB();
+                    renderGallery();
+                    return Promise.resolve();
+                }
+            });
+        }
+
+        function deleteGallery(id) {
+            if (!confirm('Delete this image?')) return;
+            MOCK_DB.galleries = (MOCK_DB.galleries || []).filter(g => g.id !== id);
+            saveDB();
+            renderGallery();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGallery();
+        });
+    </script>
+</body>
+</html>

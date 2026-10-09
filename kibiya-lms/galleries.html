@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galleries - Kibiya Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .page-wrapper { max-width: 1150px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+        .hero { text-align: center; margin-bottom: 2.5rem; }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+        .hero p { max-width: 760px; margin: 0 auto; color: var(--text-secondary); line-height: 1.8; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+        .gallery-card { border-radius: 1rem; overflow: hidden; box-shadow: 0 18px 40px rgba(0,0,0,0.08); }
+        .gallery-card img { display: block; width: 100%; height: 220px; object-fit: cover; }
+        .gallery-card p { padding: 1rem; background: var(--bg-secondary); color: var(--text-secondary); margin: 0; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container flex justify-between items-center" style="max-width: 1200px; width: 100%;">
+            <a href="index.html" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                <img src="assets/kibiya_logo.png" alt="Kibiya Hub" style="height:42px; width:42px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span></a>
+            <div class="nav-profile flex items-center" style="gap: 0.75rem;">
+                <a href="login.html" class="btn btn-outline" style="padding: 0.4rem 1.2rem;">Login</a>
+                <a href="register.html" class="btn btn-primary" style="padding: 0.4rem 1.2rem;">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-wrapper">
+        <section class="hero">
+            <div class="badge badge-success">Campus Moments</div>
+            <h1>Gallery of Events, Classrooms, and Workshops</h1>
+            <p>Take a look behind the scenes at Kibiya Hub — our campus atmosphere, hands-on learning spaces, and community events.</p>
+        </section>
+
+        <section id="gallery-grid" class="gallery-grid">
+            <!-- Gallery items will be rendered here from MOCK_DB.galleries -->
+        </section>
+        <script src="js/main.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const container = document.getElementById('gallery-grid');
+                const galleries = (MOCK_DB.galleries || []);
+                if (galleries.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary);">No gallery images yet. Check back soon.</p>';
+                    return;
+                }
+                container.innerHTML = galleries.map(g => `
+                    <article class="gallery-card">
+                        <img src="${g.src}" alt="${(g.caption || '').replace(/"/g, '')}">
+                        <p>${g.caption || ''}</p>
+                    </article>
+                `).join('');
+            });
+        </script>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-top">
+            <div class="footer-contact-grid">
+                <div class="footer-contact-item"><div class="footer-icon">✉️</div><p>hello@example.com</p></div>
+                <div class="footer-contact-item"><div class="footer-icon">📞</div><p>+1 (555) 123-4567</p></div>
+                <div class="footer-contact-item"><div class="footer-icon">📍</div><p>123 Learning Way,<br>City, Country</p></div>
+            </div>
+        </div>
+        <div class="container footer-links">
+            <div><h4>Quick Links</h4><a href="about-us.html">About Us</a><a href="our-courses.html">Our Courses</a><a href="our-management.html">Management</a></div>
+            <div><h4>More</h4><a href="contact-us.html">Contact Us</a><a href="index.html">Home</a></div>
+        </div>
+        <div class="container footer-bottom">© 2026 Kibiya Hub. All rights reserved.</div>
+    </footer>
+</body>
+</html>

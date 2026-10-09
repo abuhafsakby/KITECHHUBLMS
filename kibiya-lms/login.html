@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/kibiya_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Kibiya Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 450px;
+            z-index: 10;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .demo-credentials {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .demo-btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        #login-error {
+            color: var(--accent-danger);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            display: none;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-wrapper">
+        <div class="card login-card">
+            <div class="login-logo logo justify-center" style="position: relative;">
+                <a href="index.html"
+                    style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.3rem; text-decoration: none; transition: color 0.2s;"
+                    onmouseover="this.style.color='var(--accent-primary)'"
+                    onmouseout="this.style.color='var(--text-secondary)'">
+                    ← Home
+                </a>
+                <img src="assets/kibiya_logo.png" alt="Kibiya Hub"
+                    style="height:56px; width:56px; object-fit:contain; border-radius:50%;">
+                Kibiya<span>Hub</span>
+            </div>
+
+            <h3 class="text-center mb-1">Welcome Back</h3>
+            <p class="text-center mb-3">Sign in to continue to the LMS</p>
+
+            <div id="login-error">Invalid credentials. Please try again.</div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-control" required placeholder="name@kibiya.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">Sign In</button>
+            </form>
+
+            <div class="demo-credentials">
+                <p class="text-center" style="font-size: 0.85rem;">Demo Quick Access</p>
+                <div class="demo-btn-group">
+                    <button class="btn btn-secondary" onclick="autoFill('admin@kibiya.com', 'password')"
+                        style="padding: 0.5rem; font-size: 0.8rem;">Admin</button>
+                    <button class="btn btn-secondary" onclick="autoFill('facilitator@kibiya.com', 'password')"
+                        style="padding: 0.5rem; font-size: 0.8rem;">Facilitator</button>
+                    <button class="btn btn-secondary" onclick="autoFill('student@kibiya.com', 'password')"
+                        style="padding: 0.5rem; font-size: 0.8rem;">Student</button>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p style="font-size: 0.9rem;">New student? <a href="register.html"
+                        style="color: var(--accent-primary);">Register here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        function autoFill(email, pwd) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = pwd;
+        }
+
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const pwd = document.getElementById('password').value;
+
+            const user = login(email, pwd);
+            if (user) {
+                // Redirect based on role
+                if (user.role === 'admin') window.location.href = 'admin/dashboard.html';
+                else if (user.role === 'facilitator') window.location.href = 'facilitator/dashboard.html';
+                else window.location.href = 'student/dashboard.html';
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('login-error').style.display = 'none';
+                }, 4000);
+            }
+        });
+
+        // If already logged in, redirect
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+            if (currentUser.role === 'admin') window.location.href = 'admin/dashboard.html';
+            else if (currentUser.role === 'facilitator') window.location.href = 'facilitator/dashboard.html';
+            else window.location.href = 'student/dashboard.html';
+        }
+    </script>
+</body>
+
+</html>
